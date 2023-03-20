@@ -71,12 +71,14 @@ export default function (
   //list加载的方法
   async function onLoad(): Promise<void> {
     try {
-      //每次请求后手动重置loading
-      listData.loading = true;
       if (typeof listData.requestFunc === "function") {
+        //每次请求后手动重置loading
+        listData.loading = true;
         const { code, message, result } = await listData.requestFunc(
           pageParams.value
         );
+        //每次请求后手动重置loading
+        listData.loading = false;
         //请求过后自动更新页码
         listData.current++;
         if (code === "0") {
@@ -100,10 +102,8 @@ export default function (
         }
         //自动开启虚拟滚动
         autoStartVirtaulScroll(listData.records.length);
-        updateRender(listData);
+        updateRender();
       }
-      //每次请求后手动重置loading
-      listData.loading = false;
     } catch (error) {
       //加载失败了可以点击错误提示重新加载
       listData.error = true;

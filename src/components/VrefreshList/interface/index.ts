@@ -21,7 +21,6 @@ interface IlistData {
   requestFunc: Function | undefined; //请求方法
   renderedRecords: any[]; //显示在可视区的数据
   records: any[]; //已经保存的list总条数
-  immediateCheck: boolean;
   finished: boolean;
   loading: boolean;
   error: boolean;

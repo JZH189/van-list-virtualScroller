@@ -14,11 +14,15 @@
         @refresh="onRefresh"
       >
         <van-list
-          v-bind="$attrs"
-          :immediate-check="listData.immediateCheck"
-          :finished="listData.finished"
-          :loading="listData.loading"
           v-model:error="listData.error"
+          v-model:loading="listData.loading"
+          :loading-text="props.loadingText"
+          :immediate-check="props.immediateCheck"
+          :finished="listData.finished"
+          :finished-text="props.finishedText"
+          :disabled="props.disabled"
+          :error-text="props.errorText"
+          :offset="props.offset"
           @load="onLoad"
         >
           <UserSlots :key="key" />
@@ -71,6 +75,7 @@ const props = withDefaults(defineProps<IVListProps>(), {
   vscrollCount: 200,
   itemGap: 10,
   itemSize: 60,
+  disabled: false,
   emptyTxt: "暂无商品信息",
   immediateCheck: false,
   listField: "records",
@@ -83,7 +88,6 @@ const listData: IlistData = reactive({
   requestFunc: undefined,
   renderedRecords: [], //已经显示在可视区的数据
   records: [], //已经保存的list总条数
-  immediateCheck: false,
   finished: false, //数据是否加载完
   loading: false, //list是否正在加载
   error: false, //设置为true，可以点击错误提示继续触发onload
@@ -103,11 +107,6 @@ watch(
   (newProps) => {
     //获取加载方法
     listData.requestFunc = newProps.requestFunc;
-    //初始化数据
-    listData.immediateCheck = newProps?.immediateCheck || false;
-    listData.finished = newProps?.finished || false;
-    listData.loading = newProps?.loading || false;
-    listData.error = newProps?.error || false;
   },
   {
     immediate: true,
