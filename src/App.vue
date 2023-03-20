@@ -40,14 +40,14 @@ async function getDataList(): Promise<{
       }));
       //模拟后端接口数据返回
       return resolve({
-        code: "-0",
+        code: "0",
         message: "success",
         result: {
           records,
           total: records.length,
         }, //数据列表
       });
-    }, 300);
+    }, 1000);
   });
 }
 
