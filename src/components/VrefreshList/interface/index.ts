@@ -1,0 +1,38 @@
+interface IVListProps {
+  emptyTxt?: string; //无数据时展示的文字
+  loading?: boolean; //是否加载中
+  error?: boolean; //是否加载出错？
+  errorText?: string; //加载出错后的文字提示，点击可以继续触发加载
+  finished?: boolean; //是否加载完成？
+  offset?: string | number; //距离底部多少开始触发上拉加载更多
+  loadingText?: string; //加载中的文字提示
+  finishedText?: string; //所有数据加载完成后的提示
+  immediateCheck?: boolean; //是否立即滚动位置检查
+  direction?: string; //滚动触发加载的方向('down')，可选值为 ‘up’
+  disabled?: boolean; //是否禁用滚动加载
+  listField: string; //接口返回的list字段名称比如：result.records
+  requestParam: any; //加载list的请求参数
+  requestFunc: (params: any) => Promise<any>; //加载list的方法
+  vscrollCount?: number; //超过设定的list长度自动开启虚拟滚动
+  itemGap?: number; //默认每项之间的间距
+  itemSize?: number; //默认每项的高度
+}
+interface IlistData {
+  requestFunc: Function | undefined; //请求方法
+  renderedRecords: any[]; //显示在可视区的数据
+  records: any[]; //已经保存的list总条数
+  immediateCheck: boolean;
+  finished: boolean;
+  loading: boolean;
+  error: boolean;
+  total: number;
+  current: number;
+  size: number; //每页展示多少条记录
+  isVirtaulScroll: boolean; //是否开启虚拟滚动
+  contentHeight: number; //list盒子元素的高度
+  totalHeight: number; //list的总高度
+  translateY: number; //记录list偏移量
+  pageCount: number; //可视区可以显示多少个项目
+  scrollToBottom: number; //计算list上拉到低的scrollTop值
+}
+export { IVListProps, IlistData };
