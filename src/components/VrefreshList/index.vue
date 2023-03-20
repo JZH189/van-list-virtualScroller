@@ -22,6 +22,7 @@
           :finished-text="props.finishedText"
           :disabled="props.disabled"
           :error-text="props.errorText"
+          :direction="props.direction"
           :offset="props.offset"
           @load="onLoad"
         >
@@ -40,26 +41,24 @@ export default {
 <script lang="ts" setup>
 import { ref, watch, reactive, onMounted } from "vue";
 import useList from "./composables/useList";
+import type { ListDirection } from 'vant';
 import type { IlistData } from "./interface";
 //定义props类型
 interface IVListProps {
-  emptyTxt?: string; //无数据时展示的文字
-  loading?: boolean; //是否加载中
-  error?: boolean; //是否加载出错？
-  errorText?: string; //加载出错后的文字提示，点击可以继续触发加载
-  finished?: boolean; //是否加载完成？
-  offset?: string | number; //距离底部多少开始触发上拉加载更多
-  loadingText?: string; //加载中的文字提示
-  finishedText?: string; //所有数据加载完成后的提示
-  immediateCheck?: boolean; //是否立即滚动位置检查
-  direction?: string; //滚动触发加载的方向('down')，可选值为 ‘up’
-  disabled?: boolean; //是否禁用滚动加载
   listField: string; //接口返回的list字段名称比如：result.records
   requestParam: any; //加载list的请求参数
   requestFunc: (params: any) => Promise<any>; //加载list的方法
+  emptyTxt?: string; //无数据时展示的文字
   vscrollCount?: number; //超过设定的list长度自动开启虚拟滚动
   itemGap?: number; //默认每项之间的间距
   itemSize?: number; //默认每项的高度
+  offset?: string | number;
+  disabled?: boolean;
+  direction?: ListDirection;
+  immediateCheck?: boolean;
+  errorText?: string | undefined;
+  loadingText?: string | undefined;
+  finishedText?: string | undefined;
 }
 //定义emit
 const emit = defineEmits<{
@@ -72,16 +71,14 @@ const emit = defineEmits<{
 }>();
 //定义props
 const props = withDefaults(defineProps<IVListProps>(), {
+  finishedText: "到底了！",
+  errorText: "请求失败，点击重新加载",
+  offset: 50,
   vscrollCount: 200,
   itemGap: 10,
   itemSize: 60,
-  disabled: false,
   emptyTxt: "暂无商品信息",
-  immediateCheck: false,
   listField: "records",
-  finishedText: "到底了！",
-  errorText: "请求失败，点击重新加载",
-  offset: "50px",
 });
 //定义数据
 const listData: IlistData = reactive({
@@ -103,24 +100,18 @@ const listData: IlistData = reactive({
 });
 //依据prop初始化组件数据
 watch(
-  () => props,
-  (newProps) => {
+  () => [props, listData.records.length],
+  ([newProps, listRecordsLength]) => {
     //获取加载方法
-    listData.requestFunc = newProps.requestFunc;
+    listData.requestFunc = (newProps as any).requestFunc;
+    //设置list总高度
+    listData.totalHeight = (listRecordsLength as number) * (props.itemSize + props.itemGap);
+    //设置list上拉到底部的scrollTop
+    listData.scrollToBottom = listData.totalHeight - listData.contentHeight;
   },
   {
     immediate: true,
     deep: true,
-  }
-);
-//动态设置list总高度和到达列表底部的scrollTop
-watch(
-  () => listData.records.length,
-  (listRecordsLength) => {
-    //设置list总高度
-    listData.totalHeight = listRecordsLength * (props.itemSize + props.itemGap);
-    //设置list上拉到底部的scrollTop
-    listData.scrollToBottom = listData.totalHeight - listData.contentHeight;
   }
 );
 //根据滚动条位置计算需要渲染的list
@@ -169,9 +160,8 @@ const { UserSlots, key, refreshing, showNoList, onLoad, onRefresh, resetList } =
 onMounted(() => {
   setContentHeightAndPageCount();
 });
-//暴露出去的数据和方法
+//暴露出去的方法
 defineExpose({
-  listData,
   onRefresh,
   onLoad,
   resetList,
