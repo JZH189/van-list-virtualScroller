@@ -26,7 +26,7 @@
           :offset="props.offset"
           @load="onLoad"
         >
-          <UserSlots :key="key" />
+          <slot v-for="(item, index) in listData.renderedRecords" :key="index" :item="item"></slot>
         </van-list>
       </van-pull-refresh>
       <div class="noData" v-show="showNoList">{{ props.emptyTxt }}</div>
@@ -58,17 +58,11 @@ interface IVListProps {
   loadingText?: string | undefined;
   finishedText?: string | undefined;
 }
-//定义emit
-const emit = defineEmits<{
-  (
-    e: "dataCallback",
-    val: {
-      renderedRecords: any[];
-    }
-  ): void;
-}>();
+//默认子项的高度为60px
+const itemDefaultHeight = 60
 //定义props
 const props = withDefaults(defineProps<IVListProps>(), {
+  immediateCheck: true,
   finishedText: "到底了！",
   errorText: "请求失败，点击重新加载",
   offset: 50,
@@ -88,7 +82,7 @@ const listData: IlistData = reactive({
   current: 1, //默认展示第一页
   size: 50, //每页50条
   isVirtaulScroll: false,
-  contentHeight: 0,
+  contentHeight: 0,  //list容器的高度
   totalHeight: 0,
   translateY: 0,
   pageCount: 0,
@@ -98,16 +92,24 @@ const listData: IlistData = reactive({
 watch(
   () => listData.records.length,
   (listRecordsLength) => {
-    //设置list总高度
-    listData.totalHeight =
-      (listRecordsLength as number) * (props.itemSize + props.itemGap);
-    //设置list上拉到底部的scrollTop
-    listData.scrollToBottom = listData.totalHeight - listData.contentHeight;
+    setTotalHeight()
   },
   {
     immediate: true,
   }
 );
+//计算滚动条高度
+function setTotalHeight(): void {
+  if (props.itemSize) {
+    //如果是定高则直接计算总高度
+    listData.totalHeight = listData.records.length * (props.itemSize + props.itemGap);
+    //设置滚动条的最大行程值
+    listData.scrollToBottom = listData.totalHeight - listData.contentHeight;
+  } else {
+    listData.totalHeight = listData.records.length * (props.itemSize + props.itemGap);
+    //!todo
+  }
+}
 //根据滚动条位置计算需要渲染的list
 function updateRenderedRecords(): void {
   const startIndex = Math.floor(
@@ -117,30 +119,30 @@ function updateRenderedRecords(): void {
   const endIndex = startIndex + listData.pageCount + 20;
   listData.renderedRecords = listData.records.slice(startIndex, endIndex);
 }
-//更新数据条目至父组件
-function emitDataList(): void {
-  emit("dataCallback", {
-    //如果是虚拟滚动则需要通过计算并返回应该渲染的list，否则直接返回已经加载的数据
-    renderedRecords: listData.isVirtaulScroll
-      ? listData.renderedRecords
-      : listData.records,
-  });
-}
 function updateRender(): void {
   if (listData.isVirtaulScroll) {
     //动态计算渲染元素
     updateRenderedRecords();
+  } else {
+    listData.renderedRecords = listData.records
   }
-  //发送数据到父组件
-  emitDataList();
 }
 const scrollerWrap = ref();
-//计算盒子高度，计算可视区能展示多少个项目
+//计算盒子高度
 function setContentHeightAndPageCount(): void {
   listData.contentHeight = scrollerWrap.value.parentNode.offsetHeight;
-  listData.pageCount = Math.floor(
-    listData.contentHeight / ((props as any).itemSize + props.itemGap)
-  );
+}
+//计算可视区能展示多少个项目
+function setContentItem(): void {
+  if (props.itemSize) {
+    listData.pageCount = Math.floor(
+      listData.contentHeight / ((props as any).itemSize + props.itemGap)
+    );
+  } else {
+    listData.pageCount = Math.floor(
+      listData.contentHeight / ((props as any).itemSize + props.itemGap)
+    );
+  }
 }
 function onScroll(e: any) {
   const scrollTop = e?.target?.scrollTop || 0;
@@ -149,16 +151,17 @@ function onScroll(e: any) {
     scrollTop >= listData.scrollToBottom ? listData.scrollToBottom : scrollTop;
   updateRender();
 }
-const { UserSlots, key, refreshing, showNoList, onLoad, onRefresh, resetList } =
-  useList(listData, props, updateRender);
-onMounted(() => {
-  setContentHeightAndPageCount();
-});
+const { refreshing, showNoList, onLoad, onRefresh, resetList } = useList(listData, props, updateRender);
 //暴露出去的方法
 defineExpose({
   onRefresh,
   onLoad,
   resetList,
+});
+
+onMounted(() => {
+  setContentHeightAndPageCount();
+  setContentItem()
 });
 </script>
 

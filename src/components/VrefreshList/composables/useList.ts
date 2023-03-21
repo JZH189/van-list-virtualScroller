@@ -1,4 +1,4 @@
-import { useSlots, ref, computed, watch } from "vue";
+import { ref } from "vue";
 import { IVListProps, IlistData, RequestRes } from "../interface";
 
 export default function (
@@ -6,14 +6,6 @@ export default function (
   props: IVListProps,
   updateRender: Function
 ) {
-  const userSlots = useSlots();
-  //最终被呈现的slots
-  const renderSlots = computed(() => (userSlots as any).default());
-  //强制刷新slots
-  const key = ref(0);
-  watch(renderSlots, () => (key.value += 1));
-  //传递插槽
-  const UserSlots = () => [renderSlots.value];
   const showNoList = ref(false);
   //pull-refresh是否处于加载中状态
   const refreshing = ref(false);
@@ -76,8 +68,6 @@ export default function (
     await onLoad();
   }
   return {
-    UserSlots,
-    key,
     refreshing,
     showNoList,
     onLoad,
