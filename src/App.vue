@@ -1,18 +1,14 @@
 <template>
   <div class="content">
-    <VrefreshList
-      ref="vrefreshList"
-      :request-func="getDataList"
-      @data-callback="ondataCallback"
-    >
-      <div class="item" v-for="(item, index) in data.list" :key="index">
-        {{ item.name }}
-      </div>
+    <VrefreshList :request-func="getDataList">
+      <template #default="{ item }">
+        <div class="item" :style="{height: `${item.height}px`, lineHeight: `${item.height}px`}">{{ item.name }}</div>
+      </template>
     </VrefreshList>
   </div>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { reactive } from "vue";
 import VrefreshList from "./components/VrefreshList/index.vue";
 interface Idata {
   list: any[];
@@ -33,10 +29,10 @@ async function getDataList(): Promise<{
   return new Promise((resolve) => {
     setTimeout(() => {
       const records = [...Array(data.dataLength).keys()].map((item, i) => ({
-        brandId: i + 1,
         name: `第${i + 1}项`,
-        // height: Math.max(data.itemHeight, (Math.random() * 180).toFixed(0)),
-        height: data.itemHeight,
+        //@ts-ignore
+        height: Math.max(data.itemHeight, (Math.random() * 180).toFixed(0)),
+        // height: data.itemHeight,
       }));
       //模拟后端接口数据返回
       return resolve({
@@ -46,14 +42,6 @@ async function getDataList(): Promise<{
     }, 1000);
   });
 }
-
-function ondataCallback(val: { renderedRecords: any[] }) {
-  data.list = val.renderedRecords;
-}
-const vrefreshList = ref();
-onMounted(() => {
-  vrefreshList.value.resetList();
-});
 </script>
 
 <style>
