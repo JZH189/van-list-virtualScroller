@@ -1,6 +1,5 @@
-import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
-import 'vant/es/toast/style';
+import { createApp } from "vue";
+import "./style.css";
+import App from "./App.vue";
 
-createApp(App).mount('#app')
+createApp(App).mount("#app");
