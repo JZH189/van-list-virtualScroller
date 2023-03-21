@@ -51,6 +51,7 @@ export default function (
         updateRender();
       }
     } catch (error) {
+      listData.loading = false;
       listData.error = true;
       console.log("error: ", error);
     }
