@@ -41,13 +41,11 @@ export default {
 <script lang="ts" setup>
 import { ref, watch, reactive, onMounted } from "vue";
 import useList from "./composables/useList";
-import type { ListDirection } from 'vant';
-import type { IlistData } from "./interface";
+import type { ListDirection } from "vant";
+import type { AsyncRequestFunction, IlistData } from "./interface";
 //定义props类型
 interface IVListProps {
-  listField: string; //接口返回的list字段名称比如：result.records
-  requestParam: any; //加载list的请求参数
-  requestFunc: (params: any) => Promise<any>; //加载list的方法
+  requestFunc: AsyncRequestFunction; //加载list的方法
   emptyTxt?: string; //无数据时展示的文字
   vscrollCount?: number; //超过设定的list长度自动开启虚拟滚动
   itemGap?: number; //默认每项之间的间距
@@ -78,11 +76,9 @@ const props = withDefaults(defineProps<IVListProps>(), {
   itemGap: 10,
   itemSize: 60,
   emptyTxt: "暂无商品信息",
-  listField: "records",
 });
 //定义数据
 const listData: IlistData = reactive({
-  requestFunc: undefined,
   renderedRecords: [], //已经显示在可视区的数据
   records: [], //已经保存的list总条数
   finished: false, //数据是否加载完
@@ -100,18 +96,16 @@ const listData: IlistData = reactive({
 });
 //依据prop初始化组件数据
 watch(
-  () => [props, listData.records.length],
-  ([newProps, listRecordsLength]) => {
-    //获取加载方法
-    listData.requestFunc = (newProps as any).requestFunc;
+  () => listData.records.length,
+  (listRecordsLength) => {
     //设置list总高度
-    listData.totalHeight = (listRecordsLength as number) * (props.itemSize + props.itemGap);
+    listData.totalHeight =
+      (listRecordsLength as number) * (props.itemSize + props.itemGap);
     //设置list上拉到底部的scrollTop
     listData.scrollToBottom = listData.totalHeight - listData.contentHeight;
   },
   {
     immediate: true,
-    deep: true,
   }
 );
 //根据滚动条位置计算需要渲染的list

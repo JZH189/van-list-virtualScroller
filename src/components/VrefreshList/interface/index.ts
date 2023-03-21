@@ -1,4 +1,18 @@
+// 定义请求APi返回的res
+interface RequestRes {
+  // 列表数据
+  rows: any[];
+  // 总条目数
+  total: number;
+  [key: string]: any;
+}
+//定义请求函数
+type AsyncRequestFunction = () => Promise<RequestRes>;
 interface IVListProps {
+  requestFunc: AsyncRequestFunction; //加载list的方法
+  vscrollCount?: number; //超过设定的list长度自动开启虚拟滚动
+  itemGap?: number; //默认每项之间的间距
+  itemSize?: number; //默认每项的高度
   emptyTxt?: string; //无数据时展示的文字
   loading?: boolean; //是否加载中
   error?: boolean; //是否加载出错？
@@ -10,15 +24,8 @@ interface IVListProps {
   immediateCheck?: boolean; //是否立即滚动位置检查
   direction?: string; //滚动触发加载的方向('down')，可选值为 ‘up’
   disabled?: boolean; //是否禁用滚动加载
-  listField: string; //接口返回的list字段名称比如：result.records
-  requestParam: any; //加载list的请求参数
-  requestFunc: (params: any) => Promise<any>; //加载list的方法
-  vscrollCount?: number; //超过设定的list长度自动开启虚拟滚动
-  itemGap?: number; //默认每项之间的间距
-  itemSize?: number; //默认每项的高度
 }
 interface IlistData {
-  requestFunc: Function | undefined; //请求方法
   renderedRecords: any[]; //显示在可视区的数据
   records: any[]; //已经保存的list总条数
   finished: boolean;
@@ -34,4 +41,4 @@ interface IlistData {
   pageCount: number; //可视区可以显示多少个项目
   scrollToBottom: number; //计算list上拉到低的scrollTop值
 }
-export { IVListProps, IlistData };
+export { RequestRes, AsyncRequestFunction, IVListProps, IlistData };
