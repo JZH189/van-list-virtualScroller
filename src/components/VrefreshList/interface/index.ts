@@ -40,5 +40,10 @@ interface IlistData {
   translateY: number; //记录list偏移量
   pageCount: number; //可视区可以显示多少个项目
   scrollToBottom: number; //计算list上拉到低的scrollTop值
+  itemHeightCache: any[]; //缓存子项的高度信息
+  cacheItemTop: number[]; //缓存每一项至顶部的距离
+  startIndex: number; // 截取数组的起始索引
+  endIndex: number; // 截取数组的结束索引
+  bufferItemCount: number; //缓冲区的item个数
 }
 export { RequestRes, AsyncRequestFunction, IVListProps, IlistData };
