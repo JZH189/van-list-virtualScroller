@@ -2,8 +2,6 @@
   <div class="content">
     <VrefreshList
       ref="vrefreshList"
-      list-field="records"
-      :request-param="{}"
       :request-func="getDataList"
       @data-callback="ondataCallback"
     >
@@ -28,6 +26,8 @@ const data: Idata = reactive({
 });
 
 async function getDataList(): Promise<{
+  rows: any[];
+  total: number;
   [key: string]: any;
 }> {
   return new Promise((resolve) => {
@@ -40,12 +40,8 @@ async function getDataList(): Promise<{
       }));
       //模拟后端接口数据返回
       return resolve({
-        code: "0",
-        message: "success",
-        result: {
-          records,
-          total: records.length,
-        }, //数据列表
+        rows: records,
+        total: records.length,
       });
     }, 1000);
   });
