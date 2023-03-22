@@ -26,7 +26,11 @@
           :offset="props.offset"
           @load="onLoad"
         >
-          <slot v-for="(item, index) in listData.renderedRecords" :key="index" :item="item"></slot>
+          <slot
+            v-for="(item, index) in listData.renderedRecords"
+            :key="index"
+            :item="item"
+          ></slot>
         </van-list>
       </van-pull-refresh>
       <div class="noData" v-show="showNoList">{{ props.emptyTxt }}</div>
@@ -59,7 +63,7 @@ interface IVListProps {
   finishedText?: string | undefined;
 }
 //默认子项的高度为60px
-const itemDefaultHeight = 60
+const itemDefaultHeight = 60;
 //定义props
 const props = withDefaults(defineProps<IVListProps>(), {
   immediateCheck: true,
@@ -71,28 +75,24 @@ const props = withDefaults(defineProps<IVListProps>(), {
   itemSize: 60,
   emptyTxt: "暂无商品信息",
 });
-//定义数据
-const listData: IlistData = reactive({
-  renderedRecords: [], //已经显示在可视区的数据
-  records: [], //已经保存的list总条数
-  finished: false, //数据是否加载完
-  loading: false, //list是否正在加载
-  error: false, //设置为true，可以点击错误提示继续触发onload
-  total: 0, //总条数
-  current: 1, //默认展示第一页
-  size: 50, //每页50条
-  isVirtaulScroll: false,
-  contentHeight: 0,  //list容器的高度
-  totalHeight: 0,
-  translateY: 0,
-  pageCount: 0,
-  scrollToBottom: 0,
-});
+const { refreshing, showNoList, listData, onLoad, onRefresh, resetList } =
+  useList(props, updateRender);
+//判断是否应该开启虚拟滚动
+function autoStartVirtaulScroll(listLength: number): void {
+  //超过指定list数量自动开启虚拟滚动
+  if (listLength >= (props as any).vscrollCount) {
+    listData.isVirtaulScroll = true;
+  } else {
+    listData.isVirtaulScroll = false;
+  }
+}
 //依据prop初始化组件数据
 watch(
   () => listData.records.length,
   (listRecordsLength) => {
-    setTotalHeight()
+    //自动开启虚拟滚动
+    autoStartVirtaulScroll(listRecordsLength);
+    setTotalHeight();
   },
   {
     immediate: true,
@@ -102,11 +102,13 @@ watch(
 function setTotalHeight(): void {
   if (props.itemSize) {
     //如果是定高则直接计算总高度
-    listData.totalHeight = listData.records.length * (props.itemSize + props.itemGap);
+    listData.totalHeight =
+      listData.records.length * (props.itemSize + props.itemGap);
     //设置滚动条的最大行程值
     listData.scrollToBottom = listData.totalHeight - listData.contentHeight;
   } else {
-    listData.totalHeight = listData.records.length * (props.itemSize + props.itemGap);
+    listData.totalHeight =
+      listData.records.length * (props.itemSize + props.itemGap);
     //!todo
   }
 }
@@ -124,7 +126,7 @@ function updateRender(): void {
     //动态计算渲染元素
     updateRenderedRecords();
   } else {
-    listData.renderedRecords = listData.records
+    listData.renderedRecords = listData.records;
   }
 }
 const scrollerWrap = ref();
@@ -151,7 +153,6 @@ function onScroll(e: any) {
     scrollTop >= listData.scrollToBottom ? listData.scrollToBottom : scrollTop;
   updateRender();
 }
-const { refreshing, showNoList, onLoad, onRefresh, resetList } = useList(listData, props, updateRender);
 //暴露出去的方法
 defineExpose({
   onRefresh,
@@ -161,7 +162,7 @@ defineExpose({
 
 onMounted(() => {
   setContentHeightAndPageCount();
-  setContentItem()
+  setContentItem();
 });
 </script>
 
