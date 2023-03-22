@@ -22,7 +22,7 @@ export default function (props: IVListProps, updateRender: Function) {
     cacheItemTop: [], //缓存每一项至顶部的距离
     startIndex: 0, // 截取数组的起始索引
     endIndex: 0, // 截取数组的结束索引
-    bufferItemCount: 10, //预渲染item个数
+    bufferItemCount: 0, //预渲染item个数
   });
   const showNoList = ref(false);
   //pull-refresh是否处于加载中状态

@@ -1,6 +1,6 @@
 <template>
   <div class="content">
-    <VrefreshList :request-func="getDataList">
+    <VrefreshList :item-size="60" :request-func="getDataList">
       <template #default="{ item }">
         <div
           class="item"

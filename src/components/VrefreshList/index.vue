@@ -3,7 +3,9 @@
     <div class="scroller">
       <van-pull-refresh
         :style="{
-          transform: listData.isVirtaulScroll
+          height: `${listData.totalHeight}px`,
+          transform: 
+          false
             ? `translate3d(0, ${listData.scrollTop}px, 0)`
             : 'none',
         }"
@@ -23,10 +25,7 @@
           :offset="props.offset"
           @load="onLoad"
         >
-          <div
-            ref="virtualList"
-            :style="{ width: '100%', height: `${listData.totalHeight}px` }"
-          >
+          <div ref="virtualList">
             <slot
               v-for="(item, index) in listData.renderedRecords"
               :key="index"
@@ -77,7 +76,6 @@ const props = withDefaults(defineProps<IVListProps>(), {
   itemGap: 0,
   emptyTxt: "暂无商品信息",
 });
-
 function updateRender(): void {
   listData.renderedRecords = listData.records;
   if (listData.isVirtaulScroll) {
@@ -97,13 +95,13 @@ const { listData, refreshing, showNoList, onLoad, onRefresh, resetList } =
 function autoStartVirtaulScroll(listLength: number): void {
   //超过指定list数量自动开启虚拟滚动
   if (listLength >= props.maxScroller) {
+    listData.isVirtaulScroll = true;
     //计算容器高度
     setContentHeight();
-    listData.isVirtaulScroll = true;
     //初始化虚拟滚动数据
     initVitualData(listData);
     updateVisiable(listData);
-    // startVirtaulListObserver(virtualList.value);
+    startVirtaulListObserver(virtualList.value);
   } else {
     listData.isVirtaulScroll = false;
   }
@@ -112,7 +110,6 @@ function autoStartVirtaulScroll(listLength: number): void {
 watch(
   () => listData.records.length,
   (listRecordsLength) => {
-    console.log("listRecordsLength: ", listRecordsLength);
     //自动开启虚拟滚动
     autoStartVirtaulScroll(listRecordsLength);
   }
@@ -126,7 +123,7 @@ defineExpose({
 
 function onScroll(e: any) {
   const scrollTop = e?.target?.scrollTop || 0;
-  listData.scrollTop = scrollTop;
+  listData.scrollTop = scrollTop > listData.scrollToBottom? listData.scrollToBottom : scrollTop;
   if (listData.isVirtaulScroll) {
     //更新可视区列表元素
     updateVisiable(listData);
@@ -156,62 +153,40 @@ function startItemResizeObserver(nodes: Element[]): void {
     resizeObserver.observe(node);
   }
 }
-function getIndexByArray(start: number, end: number, array: any[]): any[] {
-  let indexArr = [];
-  for (let i = start; i <= end; i++) {
-    indexArr.push({
-      order: i,
-      val: array[i],
-    });
+function getItemByArray(val: number, arr: any[]): number {
+  let index = -1,
+    start = 0,
+    end = arr.length - 1,
+    mid = Math.floor((start + end) / 2);
+  while (end - start > 1) {
+    if (val < arr[mid]) {
+      end = mid;
+      mid = Math.floor((start + end) / 2);
+    } else if (val > arr[mid]) {
+      start = mid;
+      mid = Math.floor((start + end) / 2);
+    } else {
+      index = mid
+      return index
+    }
   }
-  if (indexArr.length <= 2) {
-    return indexArr;
-  }
-  return [];
+  return(index = start)
 }
 //获取可视区起始项目索引
 function getStartIndex(listData: IlistData): number {
   const scrollTop = listData.scrollTop;
   if (scrollTop <= 0) return 0;
-  //每项距离顶部的距离组成的数组
   const cacheItemTopArray = listData.cacheItemTop;
-  let start = 0,
-    end = cacheItemTopArray.length - 1,
-    mid = Math.floor((start + end) / 2);
-  while (end - start > 1) {
-    if (scrollTop < cacheItemTopArray[mid]) {
-      end = mid;
-      mid = Math.floor((start + end) / 2);
-    } else if (scrollTop > cacheItemTopArray[mid]) {
-      start = mid;
-      mid = Math.floor((start + end) / 2);
-    }
-  }
-  const result = getIndexByArray(start, end, cacheItemTopArray);
-  if (result.length === 2) {
-    const order = result[result.length - 1].order;
-    listData.startIndex = order;
-    return order;
-  }
-  return 0;
+  return (listData.startIndex = getItemByArray(scrollTop, cacheItemTopArray))
 }
 //获取可视区结束项目的索引
 function getEndIndex(listData: IlistData): number {
-  let endIndex = 0;
-  // if (props.itemSize) {
-  //   //定高的情况可以直接计算可视区的展示个数
-  //   listData.pageCount = Math.ceil(
-  //     listData.contentHeight / ((props as any).itemSize + props.itemGap)
-  //   );
-  //   endIndex =
-  //     listData.startIndex + listData.pageCount + listData.bufferItemCount;
-  //   listData.endIndex = endIndex;
-  //   return endIndex;
-  // }
+  let endIndex = listData.startIndex; //保证endIndex>startIndex
   let itemHeightTotal = 0;
+  const contentHeight = listData.contentHeight //渲染容器高度
   for (let i = listData.startIndex; i < listData.records.length; i++) {
-    itemHeightTotal += listData.records[i].height + props.itemGap;
-    if (itemHeightTotal >= listData.contentHeight) {
+    itemHeightTotal += listData.itemHeightCache[i].height + props.itemGap;
+    if (itemHeightTotal >= contentHeight/2 + contentHeight) {
       endIndex = i;
       break;
     }
@@ -221,7 +196,6 @@ function getEndIndex(listData: IlistData): number {
 }
 //初始化数据
 function initVitualData(listData: IlistData): void {
-  let preTOP = 0;
   listData.records.forEach((item, index) => {
     //初始化虚拟高度
     listData.itemHeightCache[index] = {
@@ -230,12 +204,13 @@ function initVitualData(listData: IlistData): void {
       height: initItemHeight, //默认子项的高度为60px
     };
     //初始化cacheTop
-    listData.cacheItemTop[index] = preTOP;
-    preTOP = initItemHeight * index + props.itemGap;
+    listData.cacheItemTop[index] = initItemHeight * index + props.itemGap;
   });
   //初始化滚动条高度
   listData.totalHeight =
     listData.records.length * (initItemHeight + props.itemGap);
+  //设置滚动条最大行程
+  listData.scrollToBottom = listData.totalHeight - listData.contentHeight
 }
 //更新数据
 function updateVitualData(listData: IlistData): void {
@@ -265,9 +240,8 @@ function updateItemHeight({ index = 0, height = 0 }) {
 function updateVisiable(listData: IlistData) {
   const start = getStartIndex(listData);
   const end = getEndIndex(listData);
-  console.log("start: ", start);
-  console.log("end: ", end);
-  console.log("listData: ", listData);
+  console.log('start: ', start);
+  console.log('end: ', end);
   const renderedRecords = listData.records.slice(start, end);
   listData.renderedRecords = renderedRecords;
 }
