@@ -1,10 +1,7 @@
 import { ref, reactive } from "vue";
 import { IVListProps, IlistData, RequestRes } from "../interface";
 
-export default function (
-  props: IVListProps,
-  updateRender: Function
-) {
+export default function (props: IVListProps, updateRender: Function) {
   //定义数据
   const listData: IlistData = reactive({
     renderedRecords: [], //已经显示在可视区的数据
@@ -18,27 +15,18 @@ export default function (
     isVirtaulScroll: false, //是否开启虚拟滚动
     contentHeight: 0, //list容器的高度
     totalHeight: 0, //滚动条的高度
-    translateY: 0, //滚动条卷去的高度
+    scrollTop: 0, //滚动条卷去的高度
     pageCount: 0, //当前可视区能渲染多少个子项
     scrollToBottom: 0, //滚动条最大行程
     itemHeightCache: [], //缓存子项的高度信息
     cacheItemTop: [], //缓存每一项至顶部的距离
     startIndex: 0, // 截取数组的起始索引
     endIndex: 0, // 截取数组的结束索引
-    bufferItemCount: 20, //缓冲区的item个数
+    bufferItemCount: 10, //预渲染item个数
   });
   const showNoList = ref(false);
   //pull-refresh是否处于加载中状态
   const refreshing = ref(false);
-  //判断是否应该开启虚拟滚动
-  function autoStartVirtaulScroll(listLength: number): void {
-    //超过指定list数量自动开启虚拟滚动
-    if (listLength >= (props as any).vscrollCount) {
-      listData.isVirtaulScroll = true;
-    } else {
-      listData.isVirtaulScroll = false;
-    }
-  }
   //list加载的方法
   async function onLoad(): Promise<void> {
     try {
@@ -59,8 +47,6 @@ export default function (
         listData.records.length
           ? (showNoList.value = false)
           : (showNoList.value = true);
-        //自动开启虚拟滚动
-        autoStartVirtaulScroll(listData.records.length);
         updateRender();
       }
     } catch (error) {

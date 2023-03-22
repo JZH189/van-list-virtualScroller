@@ -2,7 +2,15 @@
   <div class="content">
     <VrefreshList :request-func="getDataList">
       <template #default="{ item }">
-        <div class="item" :style="{height: `${item.height}px`, lineHeight: `${item.height}px`}">{{ item.name }}</div>
+        <div
+          class="item"
+          :style="{
+            height: `${item.height}px`,
+            lineHeight: `${item.height}px`,
+          }"
+        >
+          {{ item.name }},{{ item.height }}px
+        </div>
       </template>
     </VrefreshList>
   </div>
@@ -31,15 +39,15 @@ async function getDataList(): Promise<{
       const records = [...Array(data.dataLength).keys()].map((item, i) => ({
         name: `第${i + 1}项`,
         //@ts-ignore
-        height: Math.max(data.itemHeight, (Math.random() * 180).toFixed(0)),
-        // height: data.itemHeight,
+        // height: Math.max(data.itemHeight, (Math.random() * 180).toFixed(0)),
+        height: data.itemHeight,
       }));
       //模拟后端接口数据返回
       return resolve({
         rows: records,
         total: records.length,
       });
-    }, 1000);
+    }, 30);
   });
 }
 </script>
@@ -57,7 +65,7 @@ async function getDataList(): Promise<{
   line-height: 60px;
   text-align: center;
   border: 1px solid silver;
-  margin-bottom: 10px;
+  /* margin-bottom: 10px; */
   box-sizing: border-box;
 }
 </style>
